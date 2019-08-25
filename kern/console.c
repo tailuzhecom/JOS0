@@ -126,8 +126,8 @@ lpt_putc(int c)
 /***** Text-mode CGA/VGA display output *****/
 
 static unsigned addr_6845;
-static uint16_t *crt_buf;
-static uint16_t crt_pos;
+static uint16_t *crt_buf;       // 存放要显示到屏幕上的字符
+static uint16_t crt_pos;	// 屏幕上最后一个字符的位置
 
 static void
 cga_init(void)
@@ -167,7 +167,7 @@ cga_putc(int c)
 		c |= 0x0700;
 
 	switch (c & 0xff) {
-	case '\b':
+	case '\b':	// 删除
 		if (crt_pos > 0) {
 			crt_pos--;
 			crt_buf[crt_pos] = (c & ~0xff) | ' ';
@@ -194,10 +194,12 @@ cga_putc(int c)
 	// What is the purpose of this?
 	if (crt_pos >= CRT_SIZE) {
 		int i;
-
+		// 将1-79行字符复制到0-78行
 		memmove(crt_buf, crt_buf + CRT_COLS, (CRT_SIZE - CRT_COLS) * sizeof(uint16_t));
+		// 将79行字符全部置为' '
 		for (i = CRT_SIZE - CRT_COLS; i < CRT_SIZE; i++)
 			crt_buf[i] = 0x0700 | ' ';
+		// 新的字符从最后一行开始显示
 		crt_pos -= CRT_COLS;
 	}
 

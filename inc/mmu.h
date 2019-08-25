@@ -148,7 +148,7 @@
 
 #include <inc/types.h>
 
-// Segment Descriptors
+// Segment Descriptors 位段
 struct Segdesc {
 	unsigned sd_lim_15_0 : 16;  // Low bits of segment limit
 	unsigned sd_base_15_0 : 16; // Low bits of segment base address

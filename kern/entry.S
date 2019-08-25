@@ -14,8 +14,8 @@
 # RELOC(x) maps a symbol x from its link address to its actual
 # location in physical memory (its load address).	 
 ###################################################################
-
-#define	RELOC(x) ((x) - KERNBASE)
+# 计算x的物理地址
+#define	RELOC(x) ((x) - KERNBASE) 
 
 #define MULTIBOOT_HEADER_MAGIC (0x1BADB002)
 #define MULTIBOOT_HEADER_FLAGS (0)
@@ -55,11 +55,12 @@ entry:
 	# Load the physical address of entry_pgdir into cr3.  entry_pgdir
 	# is defined in entrypgdir.c.
 	movl	$(RELOC(entry_pgdir)), %eax
-	movl	%eax, %cr3
+	movl	%eax, %cr3	# cr3存放页表的物理起始地址
 	# Turn on paging.
 	movl	%cr0, %eax
+	# 将cr0的PE位，PG位，WP位都置为1，PE位是启用保护标示位，PG位是分页标识位，WP位是写保护标识
 	orl	$(CR0_PE|CR0_PG|CR0_WP), %eax
-	movl	%eax, %cr0
+	movl	%eax, %cr0	# 开启分页
 
 	# Now paging is enabled, but we're still running at a low EIP
 	# (why is this okay?).  Jump up above KERNBASE before entering
@@ -87,10 +88,10 @@ spin:	jmp	spin
 ###################################################################
 # boot stack
 ###################################################################
-	.p2align	PGSHIFT		# force page alignment
+	.p2align	PGSHIFT		# force page alignment pow(2, 22) 4MB
 	.globl		bootstack
 bootstack:
-	.space		KSTKSIZE
+	.space		KSTKSIZE	# 8 * 4096,预留32KB
 	.globl		bootstacktop   
 bootstacktop:
 

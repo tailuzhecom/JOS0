@@ -3,12 +3,14 @@
 
 #include <inc/types.h>
 
+// 程序暂停
 static inline void
 breakpoint(void)
 {
 	asm volatile("int3");
 }
 
+// 从端口读取1B内容到data
 static inline uint8_t
 inb(int port)
 {
@@ -26,6 +28,7 @@ insb(int port, void *addr, int cnt)
 		     : "memory", "cc");
 }
 
+// 从端口读取2B内容到data
 static inline uint16_t
 inw(int port)
 {
@@ -43,6 +46,7 @@ insw(int port, void *addr, int cnt)
 		     : "memory", "cc");
 }
 
+// 从端口读取4B内容到data
 static inline uint32_t
 inl(int port)
 {
@@ -58,6 +62,11 @@ insl(int port, void *addr, int cnt)
 		     : "=D" (addr), "=c" (cnt)
 		     : "d" (port), "0" (addr), "1" (cnt)
 		     : "memory", "cc");
+
+	// repnz指令是当计数器%ecx的值不为零是就一直重复后面的串操作指令。
+	// insl (%dx), %es:(%edi) 将端口的数据传输到指定的地址
+	// %dx ： 要访问的端口号
+	// %es:(%edi) ： 要传输到的地址
 }
 
 static inline void
