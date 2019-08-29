@@ -62,6 +62,7 @@ void	page_decref(struct PageInfo *pp);
 
 void	tlb_invalidate(pde_t *pgdir, void *va);
 
+// 获取PageInfo对应的pde或者pte
 static inline physaddr_t
 page2pa(struct PageInfo *pp)
 {
