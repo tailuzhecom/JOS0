@@ -182,6 +182,7 @@ mem_init(void)
 	//      (ie. perm = PTE_U | PTE_P)
 	//    - pages itself -- kernel RW, user NONE
 	// Your code goes here:
+	boot_map_region(kern_pgdir, UPAGES, PTSIZE, PADDR(pages), PTE_U); // PTSIZE = 1024 * 4096
 
 
 	//////////////////////////////////////////////////////////////////////
@@ -195,7 +196,7 @@ mem_init(void)
 	//       overwrite memory.  Known as a "guard page".
 	//     Permissions: kernel RW, user NONE
 	// Your code goes here:
-	// boot_map_region(kern_pgdir, KSTACKTOP - KSTKSIZE, KSTKSIZE, );
+	boot_map_region(kern_pgdir, KSTACKTOP - KSTKSIZE, KSTKSIZE, PADDR(bootstack), PTE_W);
 
 	//////////////////////////////////////////////////////////////////////
 	// Map all of physical memory at KERNBASE.
@@ -205,7 +206,7 @@ mem_init(void)
 	// we just set up the mapping anyway.
 	// Permissions: kernel RW, user NONE
 	// Your code goes here:
-	// boot_map_region(kern_pgdir, KERNBASE, (size_t)2 << 32, 0, PTE_W);
+	boot_map_region(kern_pgdir, KERNBASE, 0xffffffff - KERNBASE, 0, PTE_W);
 
 	// Check that the initial page directory has been set up correctly.
 	check_kern_pgdir();
@@ -301,8 +302,9 @@ page_alloc(int alloc_flags)
 	struct PageInfo *res = page_free_list;
 	page_free_list = page_free_list->pp_link;
 	res->pp_link = NULL;
-	if (alloc_flags & ALLOC_ZERO)
+	if (alloc_flags & ALLOC_ZERO) {
 		memset(page2kva(res), 0, PGSIZE);
+	}
 	return res;
 }
 
@@ -378,7 +380,7 @@ pgdir_walk(pde_t *pgdir, const void *va, int create)
 				return NULL;
 			new_page->pp_ref++;	
 			physaddr_t new_page_pyaddr = page2pa(new_page);	// 获取页面的paddr
-			pgdir[pt_idx] = new_page_pyaddr | PTE_P | PTE_W | PTE_U;	// 构建pde
+			pgdir[pd_idx] = new_page_pyaddr | PTE_P | PTE_W | PTE_U;	// 构建pde
 			pte_t *target_pt = KADDR(new_page_pyaddr);	// 获取page table的vaddr
 			return target_pt + pt_idx;	// 返回pte的vaddr
 		}
@@ -403,10 +405,10 @@ boot_map_region(pde_t *pgdir, uintptr_t va, size_t size, physaddr_t pa, int perm
 	// Fill this function in
 	int page_num = size / PGSIZE;
 	int i = 0;
-	pte_t* pt_vaddr;
 	// 将映射的数据分割为页，更新页的结构
 	for (i = 0; i < page_num; i++) {
 		pte_t *pte_item = pgdir_walk(pgdir, (void*)va, 1);	// 获取page table entry
+		assert(pte_item != NULL);
 		*pte_item = pa | perm | PTE_P; // 更新pte信息，因为pa是page-aligned的，所以pa前12位为0
 		va += PGSIZE;
 		pa += PGSIZE;
@@ -733,8 +735,9 @@ static physaddr_t
 check_va2pa(pde_t *pgdir, uintptr_t va)
 {
 	pte_t *p;
-
+	uint32_t pd_idx = PDX(va);
 	pgdir = &pgdir[PDX(va)];
+
 	if (!(*pgdir & PTE_P))
 		return ~0;
 	p = (pte_t*) (PTE_ADDR(*pgdir));
