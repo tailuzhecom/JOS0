@@ -12,3 +12,6 @@
 [branch "lab2"]
 	remote = origin
 	merge = refs/heads/lab2
+[remote "tailuzhe"]
+	url = https://github.com/tailuzhecom/mit6.828.git
+	fetch = +refs/heads/*:refs/remotes/tailuzhe/*
