@@ -63,13 +63,10 @@ void	page_decref(struct PageInfo *pp);
 
 void	tlb_invalidate(pde_t *pgdir, void *va);
 
-<<<<<<< HEAD
 int	user_mem_check(struct Env *env, const void *va, size_t len, int perm);
 void	user_mem_assert(struct Env *env, const void *va, size_t len, int perm);
 
-=======
 // 获取PageInfo对应的pde或者pte
->>>>>>> lab2
 static inline physaddr_t
 page2pa(struct PageInfo *pp)
 {
