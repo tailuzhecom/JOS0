@@ -32,6 +32,7 @@ static const char * const error_string[MAXERROR] =
  * Print a number (base <= 16) in reverse order,
  * using specified putch function and associated pointer putdat.
  */
+// 注意这个函数是以递归的形式实现打印数字的
 static void
 printnum(void (*putch)(int, void*), void *putdat,
 	 unsigned long long num, unsigned base, int width, int padc)
@@ -41,7 +42,7 @@ printnum(void (*putch)(int, void*), void *putdat,
 		printnum(putch, putdat, num / base, base, width - 1, padc);
 	} else {
 		// print any needed pad characters before first digit
-		while (--width > 0)
+		while (--width > 0)	// 右对齐
 			putch(padc, putdat);
 	}
 
@@ -79,6 +80,7 @@ getint(va_list *ap, int lflag)
 // Main function to format and print a string.
 void printfmt(void (*putch)(int, void*), void *putdat, const char *fmt, ...);
 
+// 解析格式化输出字符串
 void
 vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 {
@@ -102,7 +104,7 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 		lflag = 0;
 		altflag = 0;
 	reswitch:
-		switch (ch = *(unsigned char *) fmt++) {
+		switch (ch = *(unsigned char *) fmt++) {  // 分析%后面的字符
 
 		// flag to pad on the right
 		case '-':
@@ -190,9 +192,9 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 		// (signed) decimal
 		case 'd':
 			num = getint(&ap, lflag);
-			if ((long long) num < 0) {
+			if ((long long) num < 0) { // 判断该数是否为负数，如果是负数在屏幕上显示负号
 				putch('-', putdat);
-				num = -(long long) num;
+				num = -(long long) num;	// abs(num)
 			}
 			base = 10;
 			goto number;
@@ -206,10 +208,13 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 		// (unsigned) octal
 		case 'o':
 			// Replace this with your code.
-			putch('X', putdat);
-			putch('X', putdat);
-			putch('X', putdat);
-			break;
+			num = getint(&ap, lflag);
+			if ((long long) num < 0) {
+				putch('-', putdat);
+				num = -(long long) num;
+			}
+			base = 8;
+			goto number;
 
 		// pointer
 		case 'p':
